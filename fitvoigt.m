@@ -48,7 +48,7 @@ function [f,G,fit,out] = fitvoigt(p,y,x,sigma),
         voigts(:,i) = amp(i) * fvoigt(x - pos(i), [tau_l(i), tau_g(i)]);
     end
     
-	baseline= offset + curve * (x - most).^2;
+    baseline= offset + curve * (x - most).^2;
     
     fit = zeros(length(x),1);
     for i=1:length(amp)

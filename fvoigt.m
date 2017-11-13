@@ -1,6 +1,6 @@
-function v=voigt(x,gd)
+function v=fvoigt(x,gd)
 %
-% VOIGHT(X,[GAMMA,DELTA]) returns the Voigt lineshape which
+% FVOIGHT(X,[GAMMA,DELTA]) returns the Voigt lineshape which
 % is the convolution of a Lorentzian and a Gaussian, where
 % the gaussian fwhm is delta and the lorentzian fwhm is
 % gamma.  Uses the complex error function CERF.
