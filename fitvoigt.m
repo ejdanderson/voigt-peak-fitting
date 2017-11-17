@@ -26,6 +26,7 @@ function [f,G,fit,out] = fitvoigt(p,y,x,sigma),
   
     % insist a1, a2, a3, tau1l, tau2l > 0
     % @TODO is this really needed? Should be for all amps/taus
+    %{
     if (amp(1) < 0) | (amp(2) < 0) | (amp(3) < 0), 
         f=1e18;
         fit=zeros(size(y));
@@ -41,6 +42,7 @@ function [f,G,fit,out] = fitvoigt(p,y,x,sigma),
         disp('fixing 1l'); 
         return
     end
+    %}
   
     length(amp);
     voigts = zeros(length(x), length(amp));
