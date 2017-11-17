@@ -121,7 +121,8 @@ for i=1:length(files)
         table_data(j, 4) = answer(index + 3);
     end
   
-    
+    % MATLAB trickery, produce a subplot, get its position and delete it.
+    % Then put the uitable into the subplot position
     sp = subplot(2,1,2);
     pos = get(sp, 'Position');
     un = get(sp, 'Units');
