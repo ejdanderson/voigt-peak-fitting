@@ -99,6 +99,7 @@ for i=1:length(files)
     [answer, g] = simps('fitvoigt', guess,(free_parameters),[],low_guess, high_guess, file_data(roi, y_index), x_in_cm(roi), 1);
     [f, G, fit, out] = fitvoigt(answer, file_data(roi, y_index), x_in_cm(roi), 1);
     
+    % -------- Plot Fit -------- %
     subplot(2,1,1)
     plot(out{1}, out{2}-out{5}, out{1}, out{3}-out{5});
 
@@ -106,29 +107,29 @@ for i=1:length(files)
     ylabel('Intensity (arb. u.)')
     xlabel('Raman Shift (cm^-^1)')
     
-    
-    % Process data
-    results(i, :)=answer;
+    % -------- Process data -------- %
+    results(i, :)=answer; % Export this to a file if you want all data in a csv
     
     % No need to show baseline fit, hence -3 parameters
-    table_rows = (length(answer)-3)/4;
+    table_rows = (length(answer) - 3) / 4;
     table_data = zeros(table_rows, 4);
     for j=1:table_rows
-        index = (j-1)*4 + 1;
+        index = (j - 1) * 4 + 1;
         table_data(j, 1) = answer(index);
         table_data(j, 2) = answer(index + 1);
         table_data(j, 3) = answer(index + 2);
         table_data(j, 4) = answer(index + 3);
     end
   
+    % -------- Plot data -------- %
     % MATLAB trickery, produce a subplot, get its position and delete it.
     % Then put the uitable into the subplot position
-    sp = subplot(2,1,2);
+    sp = subplot(2, 1, 2);
     pos = get(sp, 'Position');
     un = get(sp, 'Units');
     delete(sp);
     cnames={'Amp', 'Position', 'Lorentzian FWHM', 'Gaussian FWHM'};
-    t = uitable(hf, 'Data', table_data, 'ColumnName', cnames,'Units',un,'Position',pos);
+    t = uitable(hf, 'Data', table_data, 'ColumnName', cnames, 'Units', un, 'Position', pos);
 end
 
 
