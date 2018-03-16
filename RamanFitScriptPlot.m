@@ -1,5 +1,12 @@
+% @TODO Protect the user from over-writing results at the bottom of the file?
+% It would be easy to run a 10 hour fit which auto-exports the results,
+% then run a subset of points which over-writes the previous output.
+
 df = 'F:\Dropbox\Dropbox\Raman\20180305-ascii\tip-halfmicron';
 x_in_cm = importdata('F:\Dropbox\Dropbox\Raman\20180305-ascii\xvals.txt');
+
+%df = '~/Dropbox/Raman/20180305-ascii/tip-halfmicron';
+%x_in_cm = importdata('~/Dropbox/Raman/20180305-ascii/xvals.txt');
 
 delimiterIn = '\t';
 headerlinesIn = 3;
@@ -8,15 +15,25 @@ A = importdata(df, delimiterIn, headerlinesIn);
 num_steps_x = str2num(A.textdata{2});
 num_steps_y = str2num(A.textdata{1});
 
-fwhm_grids = zeros(num_steps_x, num_steps_y);
-pp_grids = zeros(num_steps_x, num_steps_y);
+% Which peaks to create a 2-D map for. These correspond to the peaks
+% defined in the guess variable below
+peaks_to_plot = [1,3];
+
+fwhm_grids = zeros(num_steps_x, num_steps_y, length(peaks_to_plot));
+pp_grids = zeros(num_steps_x, num_steps_y, length(peaks_to_plot));
+intensity_grids = zeros(num_steps_x, num_steps_y, length(peaks_to_plot));
 
 % Wether or not to plot the fit for every data point (usually you dont want
 % this set if you have more than 20 data points)
 % Manually set the x and y ranges in the for loops to test your data
-show_individual = false;
+show_individual = true;
 
-% Region of interest in cm^-1 (WHAT PEAKS ARE YOU LOOKING AT?)
+% x and y Range to loop over. TO get a sample of data, you might do
+% something like: x_range=0:40:399, y_range=1:1
+x_range = 0:40:399;%0:num_steps_x-1;
+y_range = 1:1;%num_steps_y
+
+% Region of interest in cm^-1 (WHAT PEAKS ARE YOU LOOKING AT?, put them in the ROI)
 rois = 900;
 roie = 1050;
 
@@ -68,8 +85,8 @@ end
 % Times how long the rest of the code takes
 runTime = tic;
 
-for x = 0:(num_steps_x-1)
-    for y = 1:num_steps_y
+for x = x_range
+    for y = y_range
         tic;
         index = (num_steps_y * x) + y;
         index
@@ -103,15 +120,16 @@ for x = 0:(num_steps_x-1)
         high_guess = guess + guess_delta;
         low_guess = guess - guess_delta;
 
-        % Run the fitting procedure
-        
+        % Run the fitting procedure    
         [answer, g] = simps('fitvoigt', guess,(free_parameters),[],low_guess, high_guess, y_intensity(roi), x_in_cm(roi), 1);
         [f, G, fit, out] = fitvoigt(answer, y_intensity(roi), x_in_cm(roi), 1);
+        
+        
         if show_individual
             % -------- Plot Fit -------- %
             subplot(2,1,1)
             plot(out{1}, out{2}-out{5}, out{1}, out{3}-out{5});
-            title('178,11')
+            title(strcat('x=', int2str(x), ', y=', int2str(y_pos)))
             ylabel('Intensity (arb. u.)')
             xlabel('Raman Shift (cm^-^1)')
         end
@@ -134,13 +152,10 @@ for x = 0:(num_steps_x-1)
             %voigt peak width
             table_data(j, 5) = gauss_fwhm*(1-2.0056*1.0593+sqrt((lorentz_fwhm/gauss_fwhm)^2+2*1.0593*lorentz_fwhm/gauss_fwhm+2.0056^2*1.0593^2));
 
-            if j == 1 % If this is the first peak, take note
-                peak_fwhm(i, 1) = answer(index+1);
-                peak_fwhm(i, 2) = table_data(j, 5);
-                peak_fwhm(i, 3) = table_data(j, 1);
-                
-                pp_grids(x+1, y_pos) = table_data(j, 2);
-                fwhm_grids(x+1, y_pos) = table_data(j, 5);
+            if ismember(j, peaks_to_plot)
+                pp_grids(x+1, y_pos, j) = table_data(j, 2);
+                fwhm_grids(x+1, y_pos, j) = table_data(j, 5);
+                intensity_grids(x+1, y_pos, j) = table_data(j, 1);
             end
         end
 
@@ -156,53 +171,46 @@ for x = 0:(num_steps_x-1)
             cnames={'Amp', 'Position', 'Lorentzian FWHM', 'Gaussian FWHM', 'Voigt FWHM'};
             t = uitable(hf, 'Data', table_data, 'ColumnName', cnames, 'Units', un, 'Position', pos);
         end
-
-        
-        if mod(index,2000) == 0
-            figure
-            imagesc(transpose(pp_grids(:, :)))
-            pbaspect([1 num_steps_y/num_steps_x 1])
-            colorbar
-            
-            figure
-            imagesc(transpose(fwhm_grids(:, :)))
-            pbaspect([1 num_steps_y/num_steps_x 1])
-            colorbar
-        end
-                
         toc
-    end % for x = 0:num_steps_x-1
-end % for peak_num=1:size(peaks, 1)
+    end % for y = y_range
+end % for x = x_range
 
 
+[fpath, fname] = fileparts(df);
 
-figure
-imagesc(transpose(pp_grids(:, :)))
-pbaspect([1 num_steps_y/num_steps_x 1])
-colorbar
-savefig('F:\Dropbox\Dropbox\Raman\20180305-ascii\tip-pp.fig')
 
-figure
-imagesc(transpose(fwhm_grids(:, :)))
-pbaspect([1 num_steps_y/num_steps_x 1])
-colorbar
-savefig('F:\Dropbox\Dropbox\Raman\20180305-ascii\tip-fwhm.fig')
+for j=1:length(peaks_to_plot)
+    filename_base = fullfile(fpath, fname);
+    
+    i = peaks_to_plot(j);
+    i_str = int2str(i);
+    
+    figure
+    imagesc(transpose(pp_grids(:, :, i)))
+    pbaspect([1 num_steps_y/num_steps_x 1])
+    colorbar
+    title(strcat('Peak Position, peak', i_str));
+    savefig(strcat(filename_base, '_peak_pos_peak_', i_str, '.fig'));
+    dlmwrite(strcat(filename_base, '_peak_pos_peak_', i_str, '.txt'), pp_grids(:, :, i));
 
-dlmwrite('F:\Dropbox\Dropbox\Raman\20180305-ascii\tip-pp.txt', pp_grids);
-dlmwrite('F:\Dropbox\Dropbox\Raman\20180305-ascii\tip-fwhm.txt', fwhm_grids);
+    figure
+    imagesc(transpose(fwhm_grids(:, :, i)))
+    pbaspect([1 num_steps_y/num_steps_x 1])
+    colorbar
+    title(strcat('FWHM, peak', i_str));
+    savefig(strcat(filename_base, '_fwhm_peak_', i_str, '.fig'))
+    dlmwrite(strcat(filename_base, '_fwhm_peak_', i_str, '.txt'), fwhm_grids(:, :, i));
 
-%figure
-%uitable('Data', results);
-%{
-figure
-uitable('Data', peak_fwhm, 'ColumnName', {'Peak Pos', 'Voigt FWHM', 'Amp'});
-figure
-scatter(1:size(A,1), peak_fwhm(:,2));
-figure
-scatter(1:size(A,1), peak_fwhm(:,1));
-figure
-scatter(1:size(A,1), peak_fwhm(:,3));
-%}
+    figure
+    imagesc(transpose(intensity_grids(:, :, i)))
+    pbaspect([1 num_steps_y/num_steps_x 1])
+    colorbar
+    title(strcat('Intensity, peak', i_str));
+    savefig(strcat(filename_base, '_intensity_peak_', i_str, '.fig'))
+    dlmwrite(strcat(filename_base, '_intensity_peak_', i_str, '.txt'), intensity_grids(:, :, i));
+end
+
+dlmwrite(fullfile(fpath, strcat(fname, '_all_data.txt')), results)
 
 toc(runTime)
 
