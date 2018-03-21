@@ -2,7 +2,7 @@
 % It would be easy to run a 10 hour fit which auto-exports the results,
 % then run a subset of points which over-writes the previous output.
 
-df = 'F:\Dropbox\Dropbox\Raman\20180305-ascii\tip-halfmicron';
+df = 'F:\Dropbox\Dropbox\Raman\20180305-ascii\scans\side-halfmicronscan';
 x_in_cm = importdata('F:\Dropbox\Dropbox\Raman\20180305-ascii\xvals.txt');
 
 %df = '~/Dropbox/Raman/20180305-ascii/tip-halfmicron';
@@ -26,16 +26,16 @@ intensity_grids = zeros(num_steps_x, num_steps_y, length(peaks_to_plot));
 % Wether or not to plot the fit for every data point (usually you dont want
 % this set if you have more than 20 data points)
 % Manually set the x and y ranges in the for loops to test your data
-show_individual = true;
+show_individual = false;
 
 % x and y Range to loop over. TO get a sample of data, you might do
 % something like: x_range=0:40:399, y_range=1:1
-x_range = 0:40:399;%0:num_steps_x-1;
-y_range = 1:1;%num_steps_y
+x_range = 0:num_steps_x-1;
+y_range = 1:num_steps_y;
 
 % Region of interest in cm^-1 (WHAT PEAKS ARE YOU LOOKING AT?, put them in the ROI)
 rois = 900;
-roie = 1050;
+roie = 1120;
 
 % Files are loaded into an array of data, if you have additional columns
 % this will change which indices are wavenumber and intensity. e.g. winspec
@@ -52,16 +52,16 @@ y_index = 3;
 % and make adjustments
 
 guess = [
-    18000 962 20 20 ...
-    100000 1045 15 15 ...
-    100000 1070 15 15 ...
+    20000 962 20 20 ...
+    8000 1045 30 30 ...
+    8000 1070 30 30 ...
     0 -2.5e-3 1140];    
 
 % Guess range to fit. 
 guess_delta = [
-    17000 10 10 10 ...
-    100000 10 10 10 ...
-    100000 10 10 10 ...
+    19000 10 10 10 ...
+    8000 10 25 25 ...
+    8000 10 25 25 ...
     500 10 1800];
 
 free_parameters = [
@@ -190,27 +190,27 @@ for j=1:length(peaks_to_plot)
     pbaspect([1 num_steps_y/num_steps_x 1])
     colorbar
     title(strcat('Peak Position, peak', i_str));
-    savefig(strcat(filename_base, '_peak_pos_peak_', i_str, '.fig'));
-    dlmwrite(strcat(filename_base, '_peak_pos_peak_', i_str, '.txt'), pp_grids(:, :, i));
+    savefig(strcat(filename_base, '1_peak_pos_peak_', i_str, '.fig'));
+    dlmwrite(strcat(filename_base, '1_peak_pos_peak_', i_str, '.txt'), pp_grids(:, :, i));
 
     figure
     imagesc(transpose(fwhm_grids(:, :, i)))
     pbaspect([1 num_steps_y/num_steps_x 1])
     colorbar
     title(strcat('FWHM, peak', i_str));
-    savefig(strcat(filename_base, '_fwhm_peak_', i_str, '.fig'))
-    dlmwrite(strcat(filename_base, '_fwhm_peak_', i_str, '.txt'), fwhm_grids(:, :, i));
+    savefig(strcat(filename_base, '1_fwhm_peak_', i_str, '.fig'))
+    dlmwrite(strcat(filename_base, '1_fwhm_peak_', i_str, '.txt'), fwhm_grids(:, :, i));
 
     figure
     imagesc(transpose(intensity_grids(:, :, i)))
     pbaspect([1 num_steps_y/num_steps_x 1])
     colorbar
     title(strcat('Intensity, peak', i_str));
-    savefig(strcat(filename_base, '_intensity_peak_', i_str, '.fig'))
-    dlmwrite(strcat(filename_base, '_intensity_peak_', i_str, '.txt'), intensity_grids(:, :, i));
+    savefig(strcat(filename_base, '1_intensity_peak_', i_str, '.fig'))
+    dlmwrite(strcat(filename_base, '1_intensity_peak_', i_str, '.txt'), intensity_grids(:, :, i));
 end
 
-dlmwrite(fullfile(fpath, strcat(fname, '_all_data.txt')), results)
+dlmwrite(fullfile(fpath, strcat(fname, '1_all_data.txt')), results)
 
 toc(runTime)
 
